@@ -5,6 +5,8 @@ import faiss
 import numpy as np
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
 from transformers import BartTokenizer, BartForConditionalGeneration
+import streamlit as st
+
 
 # Load the PDF
 pdf_path = 'C://Users//ey290678//Ketli//Uni//MASTERARBEIT//Code//sodapdf-converted.pdf'
@@ -109,10 +111,29 @@ def generate_response(query):
 
 # Test the model
 query = "what is virtual brain"
-response = generate_response(query)
-print("Response:", response)
+#response = generate_response(query)
+#print("Response:", response)
 
 ### Generated response
 # Response: what is virtual brainfind and share brain data comput model and softwar. map of the brain to navig and analys complex neuroscientif data. 
 # find and share and work with medic and clinic brain data in a fulli compliant way.    “Virtual Brain’s” aim is to enabl breakthrough in differ
 # area of brain scienc.
+
+# Create centered main title 
+st.title('Ask me a question 👩‍💻')
+
+# Chat message storage
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+for message in st.session_state.messages:
+    st.chat_message(message["role"]).markdown(message['content'])
+
+prompt = st.chat_input("Input your prompt here")
+
+if prompt:
+    st.chat_message('user').markdown(prompt)
+    st.session_state.messages.append({'role':'user', 'content':prompt})
+    response=generate_response(prompt)
+    st.chat_message('assistant').markdown(response)
+    st.session_state.messages.append({'role':'assistant', 'content':response})
