@@ -4,9 +4,10 @@ from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
+from transformers import BartTokenizer, BartForConditionalGeneration
 
 # Load the PDF
-pdf_path = 'C://Users//ey290678//Ketli//Uni//MASTERARBEIT//Code//Discover_EBRAINS_2023.pdf'
+pdf_path = 'C://Users//ey290678//Ketli//Uni//MASTERARBEIT//Code//sodapdf-converted.pdf'
 pdf_document = fitz.open(pdf_path)
 
 # Extract text from each page
@@ -25,8 +26,40 @@ pdf_text = " ".join(pdf_text)
 
 nltk.download('punkt_tab')
 
+# Function to chunk the text into manageable pieces
+def chunk_text(text, max_chunk_size=512, overlap=50):
+    sentences = nltk.sent_tokenize(text)  # Split into sentences
+    chunks = []
+    current_chunk = []
+    current_chunk_size = 0
+
+    for sentence in sentences:
+        sentence_length = len(sentence.split())
+        
+        # Check if adding this sentence exceeds the max chunk size
+        if current_chunk_size + sentence_length > max_chunk_size:
+            # Append the current chunk to chunks and reset
+            chunks.append(" ".join(current_chunk))
+            # Start a new chunk with overlap
+            current_chunk = current_chunk[-overlap:]  # Keep the last few sentences for context
+            current_chunk_size = sum(len(s.split()) for s in current_chunk)
+
+        # Add the sentence to the current chunk
+        current_chunk.append(sentence)
+        current_chunk_size += sentence_length
+
+    # Add any remaining sentences as the last chunk
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+    
+    return chunks
+
+
 # Split the text into sentences
-documents = nltk.sent_tokenize(pdf_text)
+# documents = nltk.sent_tokenize(pdf_text)
+
+# Split the text into chunks
+documents = chunk_text(pdf_text, max_chunk_size=512, overlap=50)
 
 # Alternatively, you can split it into paragraphs
 # documents = pdf_text.split('\n\n')  # Split by double newlines (for paragraphs)
@@ -52,9 +85,11 @@ def retrieve(query, k=5):
     distances, indices = faiss_index.search(query_embedding, k)
     return [documents[i] for i in indices[0]]
 
-# Load the GPT-2 model and tokenizer
-tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
-model = GPT2LMHeadModel.from_pretrained('gpt2')
+model_name = 'facebook/bart-large-cnn'  # You can choose any BART model
+tokenizer = BartTokenizer.from_pretrained(model_name)
+model = BartForConditionalGeneration.from_pretrained(model_name)
+
+model.eval()
 
 def generate_response(query):
     # Retrieve relevant documents
@@ -62,18 +97,22 @@ def generate_response(query):
 
     # Combine the query with retrieved documents
     input_text = query + " ".join(retrieved_docs)
-    
+
     # Tokenize the input
-    inputs = tokenizer(input_text, return_tensors='pt', truncation=True)
+    inputs = tokenizer(input_text, return_tensors='pt', truncation=True, max_length=1024)
 
     # Generate the response
-    outputs = model.generate(inputs['input_ids'], max_length=100)
+    outputs = model.generate(inputs['input_ids'], max_length=200, num_beams=4, early_stopping=True)
     response = tokenizer.decode(outputs[0], skip_special_tokens=True)
     
     return response
 
 # Test the model
-query = "Brain disorders are increasingly recognised as"
+query = "what is virtual brain"
 response = generate_response(query)
 print("Response:", response)
 
+### Generated response
+# Response: what is virtual brainfind and share brain data comput model and softwar. map of the brain to navig and analys complex neuroscientif data. 
+# find and share and work with medic and clinic brain data in a fulli compliant way.    “Virtual Brain’s” aim is to enabl breakthrough in differ
+# area of brain scienc.
