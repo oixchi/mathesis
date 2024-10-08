@@ -28,10 +28,6 @@ def get_ebrains_links(base_url):
     unique_links = list(set(filtered_links))
     return unique_links
 
-# Example usage
-base_url = 'https://www.ebrains.eu/'
-ebrains_links = sorted(get_ebrains_links(base_url))
-
 def scrape_ebrains_links(ebrains_links, output_file="ebrains_dataset.txt"):
     # Start time
     start_time = time.time()
@@ -123,17 +119,31 @@ def clean_text(data):
 
     return cleaned_data
 
-print("Main")
-# Read dataset
-input_file = 'ebrains_dataset.txt'  # Replace with your input file path
-with open(input_file, 'r', encoding='utf-8') as file:
-    data = file.readlines()
 
-# Clean the dataset
-cleaned_data = clean_text(data)
+def write_clean_dataset():
+    # Read dataset
+    input_file = 'ebrains_dataset.txt'  # Replace with your input file path
+    with open(input_file, 'r', encoding='utf-8') as file:
+        data = file.readlines()
 
-# Optionally, write cleaned data to a new file
-output_file = 'cleaned_dataset.txt'  # Replace with desired output file path
-with open(output_file, 'w', encoding='utf-8') as file:
-    for line in cleaned_data:
-        file.write(line + '\n')
+    # Clean the dataset
+    cleaned_data = clean_text(data)
+
+    # Optionally, write cleaned data to a new file
+    output_file = 'cleaned_dataset.txt'  # Replace with desired output file path
+    with open(output_file, 'w', encoding='utf-8') as file:
+        for line in cleaned_data:
+            file.write(line + '\n')
+
+
+def main():
+    base_url = 'https://www.ebrains.eu/'
+    ebrains_links = sorted(get_ebrains_links(base_url))
+    scrape_ebrains_links(ebrains_links, output_file="ebrains_dataset_new.txt")
+
+
+if __name__ == "__main__":
+    # This condition ensures that the main() function
+    # only runs if this script is executed directly,
+    # and not when it's imported as a module in another script.
+    main()

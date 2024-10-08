@@ -9,7 +9,7 @@ import streamlit as st
 
 
 # Load the PDF
-pdf_path = 'C://Users//ey290678//Ketli//Uni//MASTERARBEIT//Code//sodapdf-converted.pdf'
+pdf_path = 'C://Users//ey290678//Ketli//Uni//MASTERARBEIT//Code//ebrains_dataset_new.pdf'
 pdf_document = fitz.open(pdf_path)
 
 # Extract text from each page
@@ -109,16 +109,6 @@ def generate_response(query):
     
     return response
 
-# Test the model
-query = "what is virtual brain"
-#response = generate_response(query)
-#print("Response:", response)
-
-### Generated response
-# Response: what is virtual brainfind and share brain data comput model and softwar. map of the brain to navig and analys complex neuroscientif data. 
-# find and share and work with medic and clinic brain data in a fulli compliant way.    “Virtual Brain’s” aim is to enabl breakthrough in differ
-# area of brain scienc.
-
 # Create centered main title 
 st.title('Ask me a question 👩‍💻')
 
@@ -134,6 +124,7 @@ prompt = st.chat_input("Input your prompt here")
 if prompt:
     st.chat_message('user').markdown(prompt)
     st.session_state.messages.append({'role':'user', 'content':prompt})
-    response=generate_response(prompt)
+    #response=generate_response(prompt)
+    response = retrieve(prompt, k=3)
     st.chat_message('assistant').markdown(response)
     st.session_state.messages.append({'role':'assistant', 'content':response})
