@@ -5,28 +5,34 @@ import time
 import re
 from nltk.stem import PorterStemmer
 
-def get_ebrains_links(base_url):
-    # Send an HTTP request to the webpage
-    response = requests.get(base_url)
-    # Create a BeautifulSoup object to parse the HTML
-    soup = BeautifulSoup(response.text, 'html.parser')
-    # Find all anchor tags
-    all_links = soup.find_all('a', href=True)
-    # Extract links that start with 'ebrains.eu' or are relative links
-    filtered_links = []
-    
-    for link in all_links:
-        href = link['href']
-        # Join relative links with the base URL
-        full_url = urljoin(base_url, href)
+
+def gather_all_ebrains_links(base_url):
+    # Function to gather and return all unique links from a base URL and its linked pages
+    def get_ebrains_links(url):
+        response = requests.get(url)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        all_links = soup.find_all('a', href=True)
         
-        # Check if the link starts with 'https://www.ebrains.eu/' or contains 'ebrains.eu'
-        if 'ebrains.eu' in full_url:
-            filtered_links.append(full_url)
-    
-    # Remove duplicates and return the filtered links
-    unique_links = list(set(filtered_links))
-    return unique_links
+        # Use list comprehension to filter and process links
+        filtered_links = [urljoin(url, link['href']) for link in all_links if 'ebrains.eu' in urljoin(url, link['href'])]
+        
+        # Remove duplicates using set, then sort the list
+        unique_links = sorted(list(set(filtered_links)))
+        return unique_links
+
+    # Get all the links from the base URL
+    ebrains_links = get_ebrains_links(base_url)
+
+    # Create a combined list and ensure uniqueness across all links
+    all_links = set(ebrains_links)  # Use a set to start with unique base links
+
+    # Gather links from all individual pages and update the set
+    for link in ebrains_links:
+        page_links = get_ebrains_links(link)
+        all_links.update(page_links)  # Add new links to the set, ensuring uniqueness
+
+    # Convert set back to a list and sort it
+    return sorted(list(all_links))
 
 def scrape_ebrains_links(ebrains_links, output_file="ebrains_dataset.txt"):
     # Start time
@@ -137,9 +143,11 @@ def write_clean_dataset():
 
 
 def main():
+    # Call the function and print the results
     base_url = 'https://www.ebrains.eu/'
-    ebrains_links = sorted(get_ebrains_links(base_url))
-    scrape_ebrains_links(ebrains_links, output_file="ebrains_dataset_new.txt")
+    all_ebrains_links = gather_all_ebrains_links(base_url)
+    all_ebrains_links_without_pdf = [link for link in all_ebrains_links if not link.endswith('.pdf')]
+    scrape_ebrains_links(all_ebrains_links_without_pdf, output_file="ebrains_dataset_new_2.txt")
 
 
 if __name__ == "__main__":
